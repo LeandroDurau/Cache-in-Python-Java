@@ -89,10 +89,10 @@ class Cache_real(Memoria):
         self.tamanhor = int(math.log2(self.qtd_linhas))
         self.tamanhot = int((math.log2(self.ram.tamanho())) - self.tamanhow -self.tamanhor)
         for i in range(self.qtd_linhas):
-            ender_ram = i << (self.tamanhor+self.tamanhow)
+            ender_ram = i << (self.tamanhow)
             for j in range(self.tam_linhas):
                 self.memoria[i][j+2] = self.ram.read(ender_ram+j)
-            self.memoria[i][0] = i
+            self.memoria[i][0] = 0
             self.memoria[i][1] = 0 
 
     def read(self, ender):
