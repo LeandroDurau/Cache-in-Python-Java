@@ -7,7 +7,6 @@ from Exception import EnderecoInvalido
 
 def main():
     try:
-        
         io = IO()
         ram = RAM(22)   # 4M de RAM (2**22)
         cache = Cache_real(4 * 2**10, 64, ram) # total cache = 4K, cacheline = 64
@@ -25,7 +24,6 @@ def main():
         cache.write(inicio+1, 4165)
         cpu.run(inicio)
     except EnderecoInvalido as e:
-        print("Endereço inválido:", e.ender, file=sys.stderr)
-
+	    print("Endereco inválido:", e.ender, file=sys.stderr)
 if __name__ == '__main__':
     main()

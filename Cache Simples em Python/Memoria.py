@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import copy
 from Exception import EnderecoInvalido
 import math
 import numpy as np
@@ -80,32 +81,29 @@ class Cache_real(Memoria):
 
     def __init__(self, k, lines, ram):
         Memoria.__init__(self, k)
-        line = [0] * (lines+2)
-        self.memoria = [line] * (int(self.tamanho() / lines)) 
+        self.memoria = []
+        for i in range(int(self.tamanho() / lines)):
+            self.memoria.append([-math.inf] * (lines+2)) 
+
         self.qtd_linhas = int(self.tamanho() // lines)
         self.tam_linhas = lines
         self.ram = ram
-        self.tamanhow = int(math.log2(self.tam_linhas))
+        self.tamanhow = int(math.log2(lines))
         self.tamanhor = int(math.log2(self.qtd_linhas))
         self.tamanhot = int((math.log2(self.ram.tamanho())) - self.tamanhow -self.tamanhor)
-        for i in range(self.qtd_linhas):
-            ender_ram = i << (self.tamanhow)
-            for j in range(self.tam_linhas):
-                self.memoria[i][j+2] = self.ram.read(ender_ram+j)
-            self.memoria[i][0] = 0
-            self.memoria[i][1] = 0 
+        
 
     def read(self, ender):
 
         w = ender & (2**self.tamanhow) -1
         r = (ender >> self.tamanhow) & (2**self.tamanhor) -1
-        t = (ender >> self.tamanhow + self.tamanhor) & (2**self.tamanhot) -1
+        t = (ender >> (self.tamanhow + self.tamanhor)) & (2**self.tamanhot) -1
         s = ((ender >> self.tamanhow) << self.tamanhow)
         
-
         if self.memoria[r][0] == t:
-            print("Cache Hit: " +str(ender))
             return self.memoria[r][w+2]
+
+        tag_anterior = self.memoria[r][0]
 
         if self.memoria[r][1] == 1:
             s_cache = (self.memoria[r][0] >> self.tamanhor & r) >> self.tamanhow
@@ -116,8 +114,16 @@ class Cache_real(Memoria):
 
         for i in range(self.tam_linhas):
             self.memoria[r][i+2] = self.ram.read(s+i)
+
+        
         self.memoria[r][0] = t
-        print("Cache Miss: " +str(ender))
+        
+        if tag_anterior != -math.inf:
+            s_anteiror = ((tag_anterior<<self.tamanhor) + r)<<self.tamanhow
+            print(f'MISS: {ender} L{r}->[{s_anteiror}..{s_anteiror +(2**self.tamanhow-1)} ] | [{s}..{s+(2**self.tamanhow-1)}]->L{r} ')
+            return self.memoria[r][w+2]
+        
+        print(f'MISS: {ender} [{s}..{s+(2**self.tamanhow-1)}]->L{r} ')
         return self.memoria[r][w+2]
     
     def write(self, ender, val):
@@ -131,8 +137,9 @@ class Cache_real(Memoria):
         if self.memoria[r][0] == t:
             self.memoria[r][1] = 1
             self.memoria[r][w+2] = val
-            print("Cache Hit: " +str(ender))
             return
+        
+        tag_anterior = self.memoria[r][0]
 
         if self.memoria[r][1] == 1:
             s_cache = (self.memoria[r][0] >> self.tamanhor & r) >> self.tamanhow
@@ -145,4 +152,8 @@ class Cache_real(Memoria):
         self.memoria[r][0] = t
         self.memoria[r][1] = 1
         self.memoria[r][w+2] = val
-        print("Cache Miss: " +str(ender))
+        if tag_anterior != -math.inf:
+            s_anteiror = ((tag_anterior<<self.tamanhor) + r)<<self.tamanhow
+            print(f'MISS: {ender} L{r}->[{s_anteiror}..{s_anteiror +(2**self.tamanhow-1)}] | [{s}..{s+(2**self.tamanhow-1)}]->L{r} ')
+            return
+        print(f'MISS: {ender} [{s}..{s+(2**self.tamanhow-1)}]->L{r} ')
